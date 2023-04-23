@@ -2,6 +2,7 @@ from random import *
 import tkinter as tk
 import customtkinter
 import pygame
+from tkinter import messagebox
 import time
 
 # initialisation de la fenêtre
@@ -30,6 +31,8 @@ started = False
 pions = []
 banque = []
 joueur = 0
+perdants = 0
+impots = 0
 clique = True
 cases = {"1":["marron","sansMaison",True],
         "3":["marron","sansMaison",True],
@@ -67,13 +70,13 @@ cartes_caisse = {
     1: "Avancez jusqu'à la case départ",
     2: "Allez en prison. Ne passez pas par la case départ",
     3: "Payez une cotisation de 20M ou tirez une carte 'Chance'",
-    4: "Vous êtes libéré de prison. Cette carte peut être conservée jusqu'à ce qu'elle soit utilisée",
+    4: "Rendez-vous rue de la paix.",
     5: "Payez une amende de 50M ou tirez une carte 'Chance'",
     6: "Vous avez gagné le premier prix de mot croisé recevez 30M",
-    7: "C'est votre anniversaire chaque joueur vous donne 15M",
-    8: "Recevez votre intérêt sur l'emprunt à 7% : 25M",
+    7: "C'est votre anniversaire chaque joueur vous donne 25M",
+    8: "Recevez votre intérêt sur l'emprunt à 7% : 50M",
     9: "Payez une cotisation d'assurance de 500M",
-    10: "Ammende pour ivresse payer 50M"
+    10: "Ammende pour ivresse payer 75M"
 }
 
 casesPos = [[520, 520], [475, 520], [430, 520], [385, 520], [340, 520], [295, 520], [250, 520], [205, 520], [160, 520], [115, 520], [70, 520], [70, 475], [70, 430], [70, 385], [70, 340], [70, 295], [70, 250], [70, 205], [70, 160], [70, 115], [70, 70], [115, 70], [160, 70], [205, 70], [250, 70], [295, 70], [340, 70], [385, 70], [430, 70], [475, 70], [520, 70], [520, 115], [520, 160], [520, 205], [520, 250], [520, 295], [520, 340], [520, 385], [520, 430], [520, 475]]
@@ -81,59 +84,67 @@ prix = {'marron':50, 'bleu clair':100, 'rose':150, 'orange':180, 'rouge':220, 'j
 
 # fonctions importantes
 def toursuivant():
-    global started, colors, counter, pions, banque, joueur
+    global started, colors, counter, pions, banque, joueur, perdants
     if started == False:
-        print('oui')
-        if counter < 2 or counter > 8:
-            info.configure(text='ta gueule')
+        if perdants == counter-1:
+            gagnant = 0
+            for i in range(len(banque)-1):
+                if banque[i] > banque[gagnant]:
+                    gagnant = i
+            messagebox.showinfo(title='fin de la partie !', message=f'La partie fut gagnée par le joueur {colors[gagnant]} \n relancez le jeu pour rejouer.')
         else:
-            started = True
-            start["state"] = 'disabled'
-            next['state'] = 'active'
-            addPlayer['state'] = 'disabled'
-            removePlayer['state'] = 'disabled'
-            # banque initialisee
-            for i in range(counter):
-                banque.append(950)
-            print(banque)
-            # pions affiches
-            solde.configure(text=f'le joueur {colors[joueur]} a {str(banque[joueur])} millions €')
-            for i in range(counter):
-                pions.append([520, 520, 0, []])
-            pions = tour(joueur, pions)
-            print(pions)
-            print(f'apres le tour, pions (2) :{pions}')
-            print(f'le pion qui sort {joueur}')
-            solde.configure(text=f'le joueur {colors[joueur]} a {str(banque[joueur])} millions €')
-            update(pions)
-            canvas.pack()
+            print('oui')
+            if counter < 2 or counter > 8:
+                info.configure(text='nombre de joueurs mauvais. Choisissez-en un entre 2 et 8.')
+            else:
+                started = True
+                start["state"] = 'disabled'
+                next['state'] = 'active'
+                addPlayer['state'] = 'disabled'
+                removePlayer['state'] = 'disabled'
+                # banque initialisee
+                for i in range(counter):
+                    banque.append(950)
+                # pions affiches
+                solde.configure(text=f'le joueur {colors[joueur]} a {str(banque[joueur])} millions €')
+                for i in range(counter):
+                    pions.append([520, 520, 0, []])
+                pions = tour(joueur, pions)
+                solde.configure(text=f'le joueur {colors[joueur]} a {str(banque[joueur])} millions €')
+                update(pions)
+                canvas.pack()
     else:
-        print(f'longueur de la liste {len(pions)-1}')
-        print(f'pendant le tour suivant, voici la liste pions : {pions}')
-        if joueur == len(pions)-1:
-            joueur = 0
-            print(f'on a remis le joueur a zero {colors[joueur]}')
-            pions = tour(joueur, pions)
-            update(pions)
+        if perdants == counter-1:
+            gagnant = 0
+            for i in range(len(banque) - 1):
+                if banque[i] > 0:
+                    gagnant = i
+            messagebox.showinfo(title='fin de la partie !',
+                                message=f'La partie fut gagnée par le joueur {colors[gagnant]}')
         else:
-            joueur += 1
-            print(f'on a change le joueur {colors[joueur]}')
-            pions = tour(joueur, pions)
-            update(pions)
-        print(joueur)
-        print(banque)
-        if banque[joueur] < 0:
-            banque[joueur] = 'perdu'
-        solde.configure(text=f'le joueur {colors[joueur]} a {str(banque[joueur])} millions €')
-        print(f'le pion qui sort {joueur}')
+            if joueur == len(pions)-1:
+                joueur = 0
+                pions = tour(joueur, pions)
+                update(pions)
+            else:
+                joueur += 1
+                pions = tour(joueur, pions)
+                update(pions)
+            if banque[joueur] < 0:
+                solde.configure(text=f'le joueur {colors[joueur]} est hors jeu ! vous etes en dessous de zero.')
+                perdants += 1
+            else:
+                solde.configure(text=f'le joueur {colors[joueur]} a {str(banque[joueur])} millions €')
 
 def tour(joueur, pions):
     de = randint(2,12)
-    print(de)
+    sonDe = pygame.mixer.Sound("de.mp3")
+    pygame.mixer.Sound.play(sonDe)
     pionActuel = pions[joueur]
     pionActuel[2] = pionActuel[2] + de
     if pionActuel[2] > 40:
         pionActuel[2] -= 40
+    print(f'voici le truc a print la {casesPos[pionActuel[2]]}')
     caseDeplacement = casesPos[pionActuel[2]]
     pionActuel[0] = caseDeplacement[0] # position X
     pionActuel[1] = caseDeplacement[1] # position Y
@@ -143,71 +154,65 @@ def tour(joueur, pions):
     return pions
 
 def actionCase(joueur, pions):
-    parc_gratuit = 0
+    global impots
     pionActuel = pions[joueur]
     positionpion = pionActuel[2]
     if positionpion > 40:
         positionpion -= 40
+        banque[joueur] += 200
     info = cases[str(positionpion)]
     if info[0] == "marron":
         if info[2] == True:
-           achat(pions, prix['marron'], joueur)
-           if achat(pions, prix['marron'], joueur)[1] == True:
+           if achat(pions, prix['marron'], joueur)[0] == True:
                info[2] = False
         else:
             loyer(pions, prix['marron'], joueur)
     elif info[0] == "bleu clair":
         if info[2] == True:
-            achat(pions, prix['bleu clair'], joueur)
-            if achat(pions, prix['bleu clair'], joueur)[1] == True:
+            if achat(pions, prix['bleu clair'], joueur)[0] == True:
                 info[2] = False
         else:
             loyer(pions, prix['bleu clair'], joueur)
     elif info[0] == "orange":
         if info[2] == True:
-            achat(pions, prix['orange'], joueur)
-            if achat(pions, prix['orange'], joueur)[1] == True:
+            if achat(pions, prix['orange'], joueur)[0] == True:
                 info[2] = False
         else:
             loyer(pions, prix['orange'], joueur)
     elif info[0] == "rose":
         if info[2] == True:
-            achat(pions, prix['rose'], joueur)
-            if achat(pions, prix['rose'], joueur)[1] == True:
+            if achat(pions, prix['rose'], joueur)[0] == True:
                 info[2] = False
         else:
             loyer(pions, prix['rose'], joueur)
     elif info[0] == "rouge":
         if info[2] == True:
-            achat(pions, prix['rouge'], joueur)
-            if achat(pions, prix['rouge'], joueur)[1] == True:
+            if achat(pions, prix['rouge'], joueur)[0] == True:
                 info[2] = False
         else:
             loyer(pions, prix["rouge"], joueur)
     elif info[0] == "jaune":
         if info[2] == True:
-            achat(pions, prix["jaune"], joueur)
-            if achat(pions, prix['jaune'], joueur)[1] == True:
+            if achat(pions, prix['jaune'], joueur)[0] == True:
                 info[2] = False
         else:
             loyer(pions, prix["jaune"], joueur)
     elif info[0] == "vert":
         if info[2] == True:
-            achat(pions, prix["vert"], joueur)
-            if achat(pions, prix['vert'], joueur)[1] == True:
+
+            if achat(pions, prix['vert'], joueur)[0] == True:
                 info[2] = False
         else:
             loyer(pions, prix["vert"], joueur)
     elif info[0] == "bleu fonce":
         if info[2] == True:
-            if achat(pions, prix['bleu fonce'], joueur)[1] == True:
+            if achat(pions, prix['bleu fonce'], joueur)[0] == True:
                 info[2] = False
         else:
             loyer(pions, prix["bleu fonce"], joueur)
     elif info[0] == "gare":
         if info[1] == True:
-            achat(pions, prix["gare"], joueur)
-            if achat(pions, prix['gare'], joueur)[1] == True:
+            if achat(pions, prix['gare'], joueur)[0] == True:
                 info[1] = False
         else:
             loyer(pions, prix["gare"], joueur)
@@ -224,23 +229,27 @@ def actionCase(joueur, pions):
                 pionActuel[0] = prison[0]
                 pionActuel[1] = prison[1]
             elif info[1] == "parc":
-                pass
+                banque[joueur] += impots
+                impots = 0
     elif info[0] == "publique":
         if info[1] == True:
-            achat(pions, prix["compagnie"], joueur)
-            if achat(pions, prix['compagnie'], joueur)[1] == True:
+            if achat(pions, prix['compagnie'], joueur)[0] == True:
                 info[1] = False
         else:
             loyer(pions, prix["compagnie"], joueur)
-    return pions
+    return pions, banque
 
 def achat(pions, prix, joueur):
+    update(pions)
+    time.sleep(0.6)
+    achete = False
+    print('achat en cours')
     moneysound = pygame.mixer.Sound("argent.mp3")
     pygame.mixer.Sound.play(moneysound)
-    print('salut')
-    global banque, clique
-    achete = False
-    if clique == True:
+    reponse = messagebox.askyesno(title='achat', message=f"voulez-vous procéder à l'achat? prix:{prix} millions €")
+    print(reponse)
+    global banque
+    if reponse == True:
         print('oui')
         pionActuel = pions[joueur]
         print(pionActuel)
@@ -248,7 +257,9 @@ def achat(pions, prix, joueur):
         pions[joueur] = pionActuel
         banque[joueur] -= prix
         achete = True
-    return pions, achete
+    else:
+        achete = False
+    return achete, banque
 
 def loyer(pions, prix, joueur):
     moneysound = pygame.mixer.Sound("argent.mp3")
@@ -268,20 +279,63 @@ def caisse_de_com():
     carte_aleatoire = randint(1,10)
     sonCarte = pygame.mixer.Sound("carte.mp3")
     pygame.mixer.Sound.play(sonCarte)
-    canvas.create_rectangle(240, 190, 360, 410, fill='white')
-    canvas.create_rectangle(245, 195, 355, 405, fill='orange')
-    canvas.create_text(300, 240, text="CAISSE \n DE \n COMMUNAUTE", justify=tk.CENTER, font=('Helvetica 10 bold'))
-    canvas.create_text(300, 300, text="Vous avancez de \n 40", justify=tk.CENTER, font=('Helvetica 9 italic'))
+    message = cartes_caisse[carte_aleatoire]
+    update(pions)
+    messagebox.showinfo(title="Caisse de communauté", message=message)
+    communaute(joueur, pions, message)
 
 def carte_chance():
+    update(pions)
     carte_aleatoire = randint(1, 10)
     sonCarte = pygame.mixer.Sound("carte.mp3")
     pygame.mixer.Sound.play(sonCarte)
-    canvas.create_rectangle(240, 190, 360, 410, fill='white')
-    canvas.create_rectangle(245, 195, 355, 405, fill='orange')
-    canvas.create_text(300, 240, text="CAISSE \n DE \n COMMUNAUTE", justify=tk.CENTER, font=('Helvetica 10 bold'))
-    canvas.create_text(300, 300, text="Vous avancez de \n 40", justify=tk.CENTER, font=('Helvetica 9 italic'))
+    message = cartes_chance[carte_aleatoire]
+    messagebox.showinfo(title="Carte chance", message=message)
+    chance(joueur, pions, message)
 
+def communaute(joueur, pions, message):
+    global banque, impots
+    info = cartes_caisse
+    pion = pions[joueur]
+    posPrison = casesPos[10]
+    if message == info[1]:
+        pion[0] = 520
+        pion[1] = 520
+        banque[joueur] += 200
+    if info[2] == message:
+        pion[0] = posPrison[0]
+        pion[1] = posPrison[1]
+        banque[joueur] -= 50
+        impots += 50
+    if info[3] == message:
+        reponse = messagebox.askyesno(title="choix", message='oui: payer 50m \n non: se tirer une carte chance')
+        if reponse == True:
+            banque[joueur] -= 50
+        else:
+            carte_chance()
+        if info[4] == message:
+            pions[0] = 520
+            pions[1] = 430
+        if info[5] == message:
+            pions[0] = 70
+            pions[1] = 340
+        if info[6] == message:
+            banque[joueur] += 50
+        if info[7] == message:
+            banque[joueur] += (counter+1) * 25
+            for i in range(len(banque)-1):
+                banque[i] -= 25
+        if info[8] == message:
+            banque[joueur] += 75
+        if info[9] == message:
+            banque[joueur] -= 500
+            impots += 500
+        if info[10] == message:
+            banque[joueur] -= 75
+            impots += 75
+        return banque, impots
+
+# rafraichir l'accifchage
 def update(pionsPos):
     global image
     canvas.create_image(0, 0, image=image, anchor=tk.NW)
@@ -293,6 +347,7 @@ def update(pionsPos):
         canvas.create_rectangle(pionActuel[0], pionActuel[1], pionActuel[0] + 20, pionActuel[1] + 20, fill=colors[compteCouleurs])
         compteCouleurs += 1
 
+# compter les joueurs et en ajouter / ou non
 def playerCount(operation:str):
     global counter, playerCounter, addPlayer, removePlayer
     if operation == "+":
